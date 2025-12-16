@@ -4,5 +4,6 @@ export enum FieldType {
     Dropdown = 'dropdown',
     Checkbox = 'checkbox',
     Radio = 'radio',
-    TextWithValidation = 'textWithValidation'
+    TextWithValidation = 'textWithValidation',
+    Group = 'group'
 }
