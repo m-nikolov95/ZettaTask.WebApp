@@ -4,5 +4,4 @@ export interface FieldBaseModel {
   type: FieldTypeModel;
   name: string;
   label: string;
-  required?: boolean;
 }
