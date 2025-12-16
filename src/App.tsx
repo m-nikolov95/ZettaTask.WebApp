@@ -6,11 +6,9 @@ import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <JSONInputComponent/>
-        {/* <img src={logo} className="App-logo" alt="logo" /> */}
-      </header>
+    <div className='container'>
+      <JSONInputComponent />
+      {/* <img src={logo} className="App-logo" alt="logo" /> */}
     </div>
   );
 }
