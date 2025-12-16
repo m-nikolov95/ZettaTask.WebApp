@@ -1,5 +1,19 @@
+
+.jsonInputContainer {
+   display: flex;
+    flex-direction: row;
+    gap: 150px;
+}
+
+@media (max-width: 900px) {
+    .jsonInputContainer {
+        flex-direction: column;
+        gap: 50px;
+    }
+}
+
 .submitButton {
     margin-top: 10px;
     display: flex;
-    justify-content: right;
+    justify-content: flex-end;
 }
