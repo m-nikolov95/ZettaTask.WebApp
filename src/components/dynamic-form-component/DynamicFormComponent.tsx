@@ -5,7 +5,7 @@ import { Button } from '@mui/material';
 
 import { useForm } from 'react-hook-form';
 
-import { CheckboxComponent, DropdownComponent, RadioButtonComponent, TextareaComponent, TextInputComponent, TextWithValidationComponent } from '../field-components';
+import { CheckboxComponent, DropdownComponent, FieldGroupComponent, RadioButtonComponent, TextareaComponent, TextInputComponent, TextWithValidationComponent } from '../field-components';
 
 import { FieldModel } from '../../models/field-models/field-model';
 
@@ -23,58 +23,105 @@ export function DynamicFormComponent(props: DynamicFormProps) {
     let [dynamicFormState, setDynamicFormState] = useState<DynamicFormComponentState>({});
     let [outputJSONState, setOutputJSONState] = useState<string>('');
 
-    const handleOnChangeFormField = (fieldName: string, value: any): void => {
-        setDynamicFormState({
-            ...dynamicFormState,
-            [fieldName]: value
-        });
+    const setNestedFieldState = (newDeepCopiedState: DynamicFormComponentState, keys: string[], value: any): void => {
+        let currentState = newDeepCopiedState;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (!currentState[keys[i]]) {
+                currentState[keys[i]] = {};
+            }
+
+            currentState = currentState[keys[i]];
+        }
+
+        currentState[keys[keys.length - 1]] = value;
+
+        setDynamicFormState(newDeepCopiedState);
     }
 
-    const renderFields = (): JSX.Element[] => {
-        return props.jsonSchema.fields.map((field: FieldModel) => {
+    const handleOnChangeFormField = (fieldName: string, value: any): void => {
+        let keys = fieldName.split('.');
+
+        if (keys.length === 1) {
+            setDynamicFormState({
+                ...dynamicFormState,
+                [fieldName]: value
+            });
+        } else {
+            let newDeepCopiedState = JSON.parse(JSON.stringify(dynamicFormState));
+
+            setNestedFieldState(newDeepCopiedState, keys, value);
+        }
+    }
+
+    const getNestedValue = (dynamicForm: DynamicFormComponentState, fieldName: string): any => {
+        let result = dynamicForm;
+        let keys = fieldName.split('.');
+
+        for (let key of keys) {
+            result = result?.[key];
+        }
+
+        return result;
+    }
+
+    const renderFields = (fields: FieldModel[], parentPath?: string): JSX.Element[] => {
+        return fields.map((field: FieldModel) => {
+            let fieldName = parentPath ? `${parentPath}.${field.name}` : field.name;
+
             switch (field.type) {
                 case FieldType.Text:
-                    return <TextInputComponent key={field.name}
-                        fieldName={field.name}
+                    return <TextInputComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={dynamicFormState[field.name] || ''}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)} />;
+                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.TextWithValidation:
-                    return <TextWithValidationComponent key={field.name}
-                        fieldName={field.name}
+                    return <TextWithValidationComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
                         required={field.required}
                         register={register}
                         errors={errors}
                         validation={field.validation}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)} />;
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.Checkbox:
-                    return <CheckboxComponent key={field.name}
-                        fieldName={field.name}
+                    return <CheckboxComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={dynamicFormState[field.name] || false}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)} />;
+                        value={getNestedValue(dynamicFormState, fieldName) || false}
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.Dropdown:
-                    return <DropdownComponent key={field.name}
-                        fieldName={field.name}
+                    return <DropdownComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={dynamicFormState[field.name] || ''}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)}
+                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         options={field.options} />;
                 case FieldType.Radio:
-                    return <RadioButtonComponent key={field.name}
-                        fieldName={field.name}
+                    return <RadioButtonComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={dynamicFormState[field.name] || ''}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)}
+                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         options={field.options} />;
                 case FieldType.Textarea:
-                    return <TextareaComponent key={field.name}
-                        fieldName={field.name}
+                    return <TextareaComponent key={fieldName}
+                        fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={dynamicFormState[field.name] || ''}
-                        onChange={(value) => handleOnChangeFormField(field.name, value)}
+                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         rows={4} />;
+                case FieldType.Group:
+                    return <FieldGroupComponent key={fieldName}
+                        name={field.name}
+                        label={field.label}
+                        fields={field.fields}
+                        parentPath={parentPath}
+                        onChange={handleOnChangeFormField}
+                        renderFields={renderFields}
+                        collapsible={field.collapsible}
+                        defaultExpanded={field.defaultExpanded} />;
                 default:
                     return <></>;
             }
@@ -91,7 +138,7 @@ export function DynamicFormComponent(props: DynamicFormProps) {
         <div className='dynamicFormContainer'>
             <form onSubmit={handleSubmit(onSubmitButtonClicked)}>
                 <div>
-                    {renderFields()}
+                    {renderFields(props.jsonSchema.fields)}
                     <div className='submitButton'>
                         <Button variant='contained' onClick={handleSubmit(onSubmitButtonClicked)}>Submit</Button>
                     </div>
@@ -116,15 +163,24 @@ export default DynamicFormComponent;
 //     "fields": [
 //         { "type": "text", "name": "firstName", "label": "First Name" },
 //         { "type": "text", "name": "middleName", "label": "Middle Name" },
-//         { "type": "checkbox", "name": "retarted", "label": "Retarted" },
+//         { "type": "checkbox", "name": "smart", "label": "Smart" },
 //         {
 //             "type": "dropdown",
 //             "name": "country",
 //             "label": "Country",
 //             "options": [
-//                 { "key": "us", "value": "United States" },
+//                 { "key": "bg", "value": "Bulgaria" },
 //                 { "key": "uk", "value": "United Kingdom" },
-//                 { "key": "ca", "value": "Canada" }
+//                 { "key": "ja", "value": "Japan" }
+//             ]
+//         },
+//         {
+//             "type": "group",
+//             "name": "address",
+//             "label": "Address Information",
+//             "fields": [
+//                 { "type": "text", "name": "street", "label": "Street" },
+//                 { "type": "text", "name": "city", "label": "City" }
 //             ]
 //         },
 //         {
