@@ -8,12 +8,14 @@ import { useForm } from 'react-hook-form';
 import { CheckboxComponent, DropdownComponent, FieldGroupComponent, RadioButtonComponent, TextareaComponent, TextInputComponent, TextWithValidationComponent } from '../field-components';
 
 import { FieldModel } from '../../models/field-models/field-model';
+import { DependenciesViewModel } from '../../models/dependencies-models/view-models/dependencies-view-model';
 
 import { DynamicFormComponentState } from '../../state/dynamic-form-component-state';
 
 import { DynamicFormProps } from '../../props/dynamic-form-props'
 
 import { FieldType } from '../../enums/field-type';
+import { ComparisonOperator } from '../../enums/comparison-operator';
 
 import './DynamicFormComponentStyle.css';
 
@@ -65,9 +67,37 @@ export function DynamicFormComponent(props: DynamicFormProps) {
         return result;
     }
 
-    const renderFields = (fields: FieldModel[], parentPath?: string): JSX.Element[] => {
+    const checkDependencies = (dependencyCondition: DependenciesViewModel): boolean => {
+        if (dependencyCondition.visibility !== null &&
+            dependencyCondition.visibility !== undefined) {
+            let fieldValue = getNestedValue(dynamicFormState, dependencyCondition.visibility.field)
+
+            switch (dependencyCondition.visibility.operator) {
+                case ComparisonOperator.Equals:
+                    return fieldValue === dependencyCondition.visibility.value;
+                case ComparisonOperator.NotEquals:
+                    return fieldValue !== dependencyCondition.visibility.value;
+                case ComparisonOperator.In:
+                    return dependencyCondition.visibility.value.includes(fieldValue);
+                case ComparisonOperator.NotIn:
+                    return !dependencyCondition.visibility.value.includes(fieldValue);
+                default:
+                    return true;
+            }
+        }
+
+        return true;
+    }
+
+    const renderFields = (fields: FieldModel[], parentPath?: string): (JSX.Element | null)[] => {
         return fields.map((field: FieldModel) => {
             let fieldName = parentPath ? `${parentPath}.${field.name}` : field.name;
+
+            if (field.dependencies !== null &&
+                field.dependencies !== undefined &&
+                !checkDependencies(field.dependencies)) {
+                return null;
+            }
 
             switch (field.type) {
                 case FieldType.Text:
@@ -119,11 +149,9 @@ export function DynamicFormComponent(props: DynamicFormProps) {
                         fields={field.fields}
                         parentPath={parentPath}
                         onChange={handleOnChangeFormField}
-                        renderFields={renderFields}
-                        collapsible={field.collapsible}
-                        defaultExpanded={field.defaultExpanded} />;
+                        renderFields={renderFields} />;
                 default:
-                    return <></>;
+                    return null;
             }
         });
     }
@@ -159,6 +187,7 @@ export function DynamicFormComponent(props: DynamicFormProps) {
 
 export default DynamicFormComponent;
 
+// Example JSON schema to test nested groups
 // {
 //     "fields": [
 //         { "type": "text", "name": "firstName", "label": "First Name" },
@@ -201,6 +230,120 @@ export default DynamicFormComponent;
 //                 "minLength": 10,
 //                 "maxLength": 10
 //             }
+//         }
+//     ]
+// }
+
+// This JSON tests:
+
+// "equals" operator: studentId only shows when userType is "student"
+// Multiple fields with same trigger: employeeId shows for "employee"
+// Group with dependency: Entire freelancerInfo group shows only for "freelancer"
+// Checkbox dependency: experienceDetails textarea shows when hasExperience is true
+// "In" operator: northAmericaInfo group shows when country is "us" OR "ca"
+
+// Test scenarios:
+// Select "Student" and should see Student ID field
+// Select "Employee" and should see Employee ID field
+// Select "Freelancer" and should see Freelancer Information group with 2 fields
+// Check "hasExperience" and should see experience textarea
+// Select "United States" or "Canada" and should see North America Information group
+// Select "United Kingdom" or "Other" and North America group should hide
+// {
+//     "fields": [
+//         {
+//             "type": "dropdown",
+//             "name": "userType",
+//             "label": "User Type",
+//             "options": [
+//                 { "key": "student", "value": "Student" },
+//                 { "key": "employee", "value": "Employee" },
+//                 { "key": "freelancer", "value": "Freelancer" }
+//             ]
+//         },
+//         {
+//             "type": "text",
+//             "name": "studentId",
+//             "label": "Student ID",
+//             "dependencies": {
+//                 "visibility": {
+//                     "field": "userType",
+//                     "operator": "equals",
+//                     "value": "student"
+//                 }
+//             }
+//         },
+//         {
+//             "type": "text",
+//             "name": "employeeId",
+//             "label": "Employee ID",
+//             "dependencies": {
+//                 "visibility": {
+//                     "field": "userType",
+//                     "operator": "equals",
+//                     "value": "employee"
+//                 }
+//             }
+//         },
+//         {
+//             "type": "group",
+//             "name": "freelancerInfo",
+//             "label": "Freelancer Information",
+//             "dependencies": {
+//                 "visibility": {
+//                     "field": "userType",
+//                     "operator": "equals",
+//                     "value": "freelancer"
+//                 }
+//             },
+//             "fields": [
+//                 { "type": "text", "name": "companyName", "label": "Company Name" },
+//                 { "type": "text", "name": "taxId", "label": "Tax ID" }
+//             ]
+//         },
+//         {
+//             "type": "checkbox",
+//             "name": "hasExperience",
+//             "label": "Do you have experience?"
+//         },
+//         {
+//             "type": "textarea",
+//             "name": "experienceDetails",
+//             "label": "Describe your experience",
+//             "dependencies": {
+//                 "visibility": {
+//                     "field": "hasExperience",
+//                     "operator": "equals",
+//                     "value": true
+//                 }
+//             }
+//         },
+//         {
+//             "type": "dropdown",
+//             "name": "country",
+//             "label": "Country",
+//             "options": [
+//                 { "key": "bg", "value": "Bulgaria" },
+//                 { "key": "uk", "value": "United Kingdom" },
+//                 { "key": "gr", "value": "Greece" },
+//                 { "key": "other", "value": "Other" }
+//             ]
+//         },
+//         {
+//             "type": "group",
+//             "name": "europeInfo",
+//             "label": "Europe Information",
+//             "dependencies": {
+//                 "visibility": {
+//                     "field": "country",
+//                     "operator": "in",
+//                     "value": ["bg", "gr"]
+//                 }
+//             },
+//             "fields": [
+//                 { "type": "text", "name": "province", "label": "Province" },
+//                 { "type": "text", "name": "zipCode", "label": "ZIP/Postal Code" }
+//             ]
 //         }
 //     ]
 // }

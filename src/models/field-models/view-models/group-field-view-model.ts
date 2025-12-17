@@ -1,5 +1,7 @@
 import { FieldModel } from '../field-model';
 
+import { DependenciesViewModel } from '../../dependencies-models/view-models/dependencies-view-model';
+
 import { FieldType } from '../../../enums/field-type';
 
 export interface GroupFieldViewModel {
@@ -7,6 +9,5 @@ export interface GroupFieldViewModel {
     name: string;
     label: string;
     fields: FieldModel[];
-    collapsible?: boolean;
-    defaultExpanded?: boolean;
+    dependencies?: DependenciesViewModel;
 }
