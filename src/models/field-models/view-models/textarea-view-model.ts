@@ -4,6 +4,5 @@ import { FieldType } from '../../../enums/field-type';
 
 export interface TextareaFieldViewModel extends FieldBaseModel {
     type: FieldType.Textarea;
-    rows?: number;
-    maxLength?: number;
+    rows: number;
 }

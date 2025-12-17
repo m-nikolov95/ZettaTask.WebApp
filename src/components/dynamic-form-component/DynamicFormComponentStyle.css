@@ -1,12 +1,11 @@
-
-.jsonInputContainer {
-   display: flex;
+.dynamicFormContainer {
+    display: flex;
     flex-direction: row;
     gap: 150px;
 }
 
 @media (max-width: 900px) {
-    .jsonInputContainer {
+    .dynamicFormContainer {
         flex-direction: column;
         gap: 50px;
     }
@@ -16,4 +15,8 @@
     margin-top: 10px;
     display: flex;
     justify-content: flex-end;
+}
+
+.outputJSON {
+    font-size: 24px;
 }
