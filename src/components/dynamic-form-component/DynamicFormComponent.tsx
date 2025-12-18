@@ -1,11 +1,13 @@
 
-import { JSX, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 
 import { Button } from '@mui/material';
 
 import { useForm } from 'react-hook-form';
 
 import { CheckboxComponent, DropdownComponent, FieldGroupComponent, RadioButtonComponent, TextareaComponent, TextInputComponent, TextWithValidationComponent } from '../field-components';
+
+import { MockApiService } from '../../services/mock-api-service';
 
 import { FieldModel } from '../../models/field-models/field-model';
 import { DependenciesViewModel } from '../../models/dependencies-models/view-models/dependencies-view-model';
@@ -24,6 +26,52 @@ export function DynamicFormComponent(props: DynamicFormProps) {
 
     let [dynamicFormState, setDynamicFormState] = useState<DynamicFormComponentState>({});
     let [outputJSONState, setOutputJSONState] = useState<string>('');
+    let [apiCalledFields, setApiCalledFields] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        setDynamicFormState({});
+        setApiCalledFields(new Set());
+    }, [props.jsonSchema]);
+
+    useEffect(() => {
+        fetchDataAndPopulateFieldsAsync();
+    }, [dynamicFormState]);
+
+    const checkTriggerFields = (field: FieldModel): boolean => {
+        if (!field.apiConfiguration?.triggerFields) {
+            return false;
+        }
+
+        let areTriggerFieldsFull = field.apiConfiguration.triggerFields
+            .every(triggerField =>
+                dynamicFormState[triggerField] !== null &&
+                dynamicFormState[triggerField] !== undefined &&
+                dynamicFormState[triggerField] !== ''
+            );
+
+        return areTriggerFieldsFull;
+    }
+
+    const fetchDataAndPopulateFieldsAsync = async (): Promise<void> => {
+        for (let field of props.jsonSchema.fields) {
+            let areTriggerFieldsFull = checkTriggerFields(field);
+
+            let hasApiFiredForThisField = apiCalledFields.has(field.name);
+
+            if (areTriggerFieldsFull && !hasApiFiredForThisField) {
+                let apiResponse = await MockApiService.mockFetchUserAsync(dynamicFormState);
+
+                setDynamicFormState(prevState => ({
+                    ...prevState,
+                    ...apiResponse
+                }));
+
+                setApiCalledFields(prevState => (
+                    new Set(prevState).add(field.name)
+                ));
+            }
+        }
+    }
 
     const setNestedFieldState = (newDeepCopiedState: DynamicFormComponentState, keys: string[], value: any): void => {
         let currentState = newDeepCopiedState;
@@ -177,7 +225,7 @@ export function DynamicFormComponent(props: DynamicFormProps) {
                     outputJSONState !== null &&
                         outputJSONState !== undefined &&
                         outputJSONState !== '' ?
-                        <pre className='outputJSON'>{outputJSONState}</pre> :
+                        <pre className='outputJSON' data-testid="output-json">{outputJSONState}</pre> :
                         <></>
                 }
             </div>
@@ -186,164 +234,3 @@ export function DynamicFormComponent(props: DynamicFormProps) {
 }
 
 export default DynamicFormComponent;
-
-// Example JSON schema to test nested groups
-// {
-//     "fields": [
-//         { "type": "text", "name": "firstName", "label": "First Name" },
-//         { "type": "text", "name": "middleName", "label": "Middle Name" },
-//         { "type": "checkbox", "name": "smart", "label": "Smart" },
-//         {
-//             "type": "dropdown",
-//             "name": "country",
-//             "label": "Country",
-//             "options": [
-//                 { "key": "bg", "value": "Bulgaria" },
-//                 { "key": "uk", "value": "United Kingdom" },
-//                 { "key": "ja", "value": "Japan" }
-//             ]
-//         },
-//         {
-//             "type": "group",
-//             "name": "address",
-//             "label": "Address Information",
-//             "fields": [
-//                 { "type": "text", "name": "street", "label": "Street" },
-//                 { "type": "text", "name": "city", "label": "City" }
-//             ]
-//         },
-//         {
-//             "type": "radio",
-//             "name": "gender",
-//             "label": "Gender",
-//             "options": [
-//                 { "key": "male", "value": "Male" },
-//                 { "key": "female", "value": "Female" }
-//             ]
-//         },
-//         {
-//             "type": "textWithValidation",
-//             "name": "phoneNumber",
-//             "label": "Phone Number",
-//             "validation": {
-//                 "pattern": "^[0-9]+$",
-//                 "minLength": 10,
-//                 "maxLength": 10
-//             }
-//         }
-//     ]
-// }
-
-// This JSON tests:
-
-// "equals" operator: studentId only shows when userType is "student"
-// Multiple fields with same trigger: employeeId shows for "employee"
-// Group with dependency: Entire freelancerInfo group shows only for "freelancer"
-// Checkbox dependency: experienceDetails textarea shows when hasExperience is true
-// "In" operator: northAmericaInfo group shows when country is "us" OR "ca"
-
-// Test scenarios:
-// Select "Student" and should see Student ID field
-// Select "Employee" and should see Employee ID field
-// Select "Freelancer" and should see Freelancer Information group with 2 fields
-// Check "hasExperience" and should see experience textarea
-// Select "United States" or "Canada" and should see North America Information group
-// Select "United Kingdom" or "Other" and North America group should hide
-// {
-//     "fields": [
-//         {
-//             "type": "dropdown",
-//             "name": "userType",
-//             "label": "User Type",
-//             "options": [
-//                 { "key": "student", "value": "Student" },
-//                 { "key": "employee", "value": "Employee" },
-//                 { "key": "freelancer", "value": "Freelancer" }
-//             ]
-//         },
-//         {
-//             "type": "text",
-//             "name": "studentId",
-//             "label": "Student ID",
-//             "dependencies": {
-//                 "visibility": {
-//                     "field": "userType",
-//                     "operator": "equals",
-//                     "value": "student"
-//                 }
-//             }
-//         },
-//         {
-//             "type": "text",
-//             "name": "employeeId",
-//             "label": "Employee ID",
-//             "dependencies": {
-//                 "visibility": {
-//                     "field": "userType",
-//                     "operator": "equals",
-//                     "value": "employee"
-//                 }
-//             }
-//         },
-//         {
-//             "type": "group",
-//             "name": "freelancerInfo",
-//             "label": "Freelancer Information",
-//             "dependencies": {
-//                 "visibility": {
-//                     "field": "userType",
-//                     "operator": "equals",
-//                     "value": "freelancer"
-//                 }
-//             },
-//             "fields": [
-//                 { "type": "text", "name": "companyName", "label": "Company Name" },
-//                 { "type": "text", "name": "taxId", "label": "Tax ID" }
-//             ]
-//         },
-//         {
-//             "type": "checkbox",
-//             "name": "hasExperience",
-//             "label": "Do you have experience?"
-//         },
-//         {
-//             "type": "textarea",
-//             "name": "experienceDetails",
-//             "label": "Describe your experience",
-//             "dependencies": {
-//                 "visibility": {
-//                     "field": "hasExperience",
-//                     "operator": "equals",
-//                     "value": true
-//                 }
-//             }
-//         },
-//         {
-//             "type": "dropdown",
-//             "name": "country",
-//             "label": "Country",
-//             "options": [
-//                 { "key": "bg", "value": "Bulgaria" },
-//                 { "key": "uk", "value": "United Kingdom" },
-//                 { "key": "gr", "value": "Greece" },
-//                 { "key": "other", "value": "Other" }
-//             ]
-//         },
-//         {
-//             "type": "group",
-//             "name": "europeInfo",
-//             "label": "Europe Information",
-//             "dependencies": {
-//                 "visibility": {
-//                     "field": "country",
-//                     "operator": "in",
-//                     "value": ["bg", "gr"]
-//                 }
-//             },
-//             "fields": [
-//                 { "type": "text", "name": "province", "label": "Province" },
-//                 { "type": "text", "name": "zipCode", "label": "ZIP/Postal Code" }
-//             ]
-//         }
-//     ]
-// }
