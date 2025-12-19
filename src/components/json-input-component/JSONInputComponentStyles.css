@@ -1,0 +1,21 @@
+
+.jsonInputContainer {
+   display: flex;
+    flex-direction: row;
+    gap: 150px;
+}
+
+@media (max-width: 900px) {
+    .jsonInputContainer {
+        flex-direction: column;
+        gap: 50px;
+    }
+}
+
+.buttonContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 10px;
+}

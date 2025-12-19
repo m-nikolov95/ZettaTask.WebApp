@@ -1,0 +1,13 @@
+.field {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.errorMessage {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+    display: flex;
+    justify-content: flex-start;
+}

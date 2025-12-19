@@ -1,0 +1,351 @@
+1.Simple text field and checkbox form.
+    Input:
+        {
+        "fields": [
+            { "type": "text", "name": "firstName", "label": "First Name" },
+            { "type": "checkbox", "name": "isHappy", "label": "Happy" }
+        ]
+        }
+
+    Expected Output:
+        {
+        "firstName": "User",
+        "isHappy": true
+        }
+
+
+2. More complex form.
+    Input: 
+        {
+            "fields": [
+                { "type": "text", "name": "firstName", "label": "First Name" },
+                { "type": "text", "name": "middleName", "label": "Middle Name" },
+                { "type": "checkbox", "name": "smart", "label": "Smart" },
+                {
+                    "type": "dropdown",
+                    "name": "country",
+                    "label": "Country",
+                    "options": [
+                        { "key": "bg", "value": "Bulgaria" },
+                        { "key": "uk", "value": "United Kingdom" },
+                        { "key": "ja", "value": "Japan" }
+                    ]
+                },
+                {
+                    "type": "group",
+                    "name": "address",
+                    "label": "Address Information",
+                    "fields": [
+                        { "type": "text", "name": "street", "label": "Street" },
+                        { "type": "text", "name": "city", "label": "City" }
+                    ]
+                },
+                {
+                    "type": "radio",
+                    "name": "gender",
+                    "label": "Gender",
+                    "options": [
+                        { "key": "male", "value": "Male" },
+                        { "key": "female", "value": "Female" }
+                    ]
+                },
+                {
+                    "type": "textWithValidation",
+                    "name": "phoneNumber",
+                    "label": "Phone Number",
+                    "required": true,
+                        "validation": {
+                            "pattern": "^[0-9]+$",
+                            "minLength": 10,
+                            "maxLength": 10,
+                            "errorMessage": "Phone number must be exactly 10 digits"
+                        }
+                }
+            ]
+        }
+
+    Expected Output:
+        {
+        "firstName": "User",
+        "middleName": "Name",
+        "smart": true,
+        "country": "bg",
+        "address": {
+            "street": "Fleet Street",
+            "city": "Varna"
+        },
+        "gender": "male",
+        "phoneNumber": "0000000000"
+        }
+
+
+
+3. Form with dependency fields.
+    Input:
+        {
+            "fields": [
+                {
+                    "type": "dropdown",
+                    "name": "userType",
+                    "label": "User Type",
+                    "options": [
+                        { "key": "student", "value": "Student" },
+                        { "key": "employee", "value": "Employee" },
+                        { "key": "freelancer", "value": "Freelancer" }
+                    ]
+                },
+                {
+                    "type": "text",
+                    "name": "studentId",
+                    "label": "Student ID",
+                    "dependencies": {
+                        "visibility": {
+                            "field": "userType",
+                            "operator": "equals",
+                            "value": "student"
+                        }
+                    }
+                },
+                {
+                    "type": "text",
+                    "name": "employeeId",
+                    "label": "Employee ID",
+                    "dependencies": {
+                        "visibility": {
+                            "field": "userType",
+                            "operator": "equals",
+                            "value": "employee"
+                        }
+                    }
+                },
+                {
+                    "type": "group",
+                    "name": "freelancerInfo",
+                    "label": "Freelancer Information",
+                    "dependencies": {
+                        "visibility": {
+                            "field": "userType",
+                            "operator": "equals",
+                            "value": "freelancer"
+                        }
+                    },
+                    "fields": [
+                        { "type": "text", "name": "companyName", "label": "Company Name" },
+                        { "type": "text", "name": "taxId", "label": "Tax ID" }
+                    ]
+                },
+                {
+                    "type": "checkbox",
+                    "name": "hasExperience",
+                    "label": "Do you have experience?"
+                },
+                {
+                    "type": "textarea",
+                    "name": "experienceDetails",
+                    "label": "Describe your experience",
+                    "dependencies": {
+                        "visibility": {
+                            "field": "hasExperience",
+                            "operator": "equals",
+                            "value": true
+                        }
+                    }
+                },
+                {
+                    "type": "dropdown",
+                    "name": "country",
+                    "label": "Country",
+                    "options": [
+                        { "key": "bg", "value": "Bulgaria" },
+                        { "key": "uk", "value": "United Kingdom" },
+                        { "key": "gr", "value": "Greece" },
+                        { "key": "other", "value": "Other" }
+                    ]
+                },
+                {
+                    "type": "group",
+                    "name": "europeInfo",
+                    "label": "Europe Information",
+                    "dependencies": {
+                        "visibility": {
+                            "field": "country",
+                            "operator": "in",
+                            "value": ["bg", "gr"]
+                        }
+                    },
+                    "fields": [
+                        { "type": "text", "name": "province", "label": "Province" },
+                        { "type": "text", "name": "zipCode", "label": "ZIP/Postal Code" }
+                    ]
+                }
+            ]
+        }
+
+    Expected Output (one Example):
+        {
+        "userType": "student",
+        "studentId": "45",
+        "country": "bg",
+        "europeInfo": {
+            "province": "Sofia",
+            "zipCode": "0000"
+                }
+        }
+
+
+4. Flat API autofil.
+    For this example enter 1 in User Id field.
+
+    Input:
+            {
+            "fields": [
+                {
+                    "type": "text",
+                    "name": "userId",
+                    "label": "User ID",
+                    "apiConfiguration": {
+                        "triggerFields": ["userId"],
+                        "targetFields": ["firstName", "lastName", "email"]
+                    }
+                },
+                {
+                    "type": "text",
+                    "name": "firstName",
+                    "label": "First Name"
+                },
+                {
+                    "type": "text",
+                    "name": "lastName",
+                    "label": "Last Name"
+                },
+                {
+                    "type": "text",
+                    "name": "email",
+                    "label": "Email"
+                }
+            ]
+        }
+
+    Expected Output:
+            {
+    "userId": "1",
+    "firstName": "Nicolas",
+    "lastName": "Cage",
+    "email": "ghost.rider@handyman.com"
+            }
+
+
+5. Nested API autofil.
+    For this example enter 2 in User Id field
+
+        Input:
+            {
+        "fields": [
+            {
+                "type": "text",
+                "name": "userId",
+                "label": "User ID",
+                "apiConfiguration": {
+                    "triggerFields": ["userId"],
+                    "targetFields": ["personalInfo.firstName", "personalInfo.lastName", "personalInfo.email"]
+                }
+            },
+            {
+                "type": "group",
+                "name": "personalInfo",
+                "label": "Personal Info",
+                "fields": [
+                    {
+                        "type": "text",
+                        "name": "firstName",
+                        "label": "First Name"
+                    },
+                    {
+                        "type": "text",
+                        "name": "lastName",
+                        "label": "Last Name"
+                    },
+                    {
+                        "type": "text",
+                        "name": "email",
+                        "label": "Email"
+                    }
+                ]
+            }
+        ]
+    }
+
+    Expected Output:
+            {
+    "userId": "2",
+    "personalInfo": {
+        "firstName": "King",
+        "lastName": "Kong",
+        "email": "king.kong@monkeyman.com"
+                } 
+            }
+
+
+6. Dynamic Validation Rules
+    Input:
+        {
+        "fields": [
+            {
+                "type": "dropdown",
+                "name": "identificationType",
+                "label": "Identification Type",
+                "options": [
+                    { "key": "personalId", "value": "Personal ID" },
+                    { "key": "passport", "value": "Passport" },
+                    { "key": "driverLicense", "value": "Driver's License" }
+                ]
+            },
+            {
+                "type": "textWithValidation",
+                "name": "idNumber",
+                "label": "ID Number",
+                "required": true,
+                "dynamicValidation": {
+                    "watchField": "identificationType",
+                    "validationRules": {
+                        "personalId": {
+                            "pattern": "^[0-9]{10}$",
+                            "minLength": 10,
+                            "maxLength": 10,
+                            "errorMessage": "Personal ID must be exactly 10 digits"
+                        },
+                        "passport": {
+                            "pattern": "^[A-Z0-9]{6,9}$",
+                            "minLength": 6,
+                            "maxLength": 9,
+                            "errorMessage": "Passport must be 6-9 alphanumeric characters"
+                        },
+                        "driverLicense": {
+                            "pattern": "^[A-Z]{2}[0-9]{6}$",
+                            "minLength": 8,
+                            "maxLength": 8,
+                            "errorMessage": "Driver's License format: 2 letters + 6 digits (e.g., AB123456)"
+                        }
+                    },
+                    "default": {
+                        "pattern": "^[A-Z0-9]+$",
+                        "minLength": 5,
+                        "maxLength": 20,
+                        "errorMessage": "Please select an identification type first"
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "name": "fullName",
+                "label": "Full Name"
+            }
+        ]
+    }
+
+    Expected Output (one variant)
+            {
+        "identificationType": "passport",
+        "idNumber": "123465",
+        "fullName": "Tommy"
+         }
