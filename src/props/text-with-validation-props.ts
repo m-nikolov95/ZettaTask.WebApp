@@ -4,7 +4,7 @@ import { TextWithValidationViewModel } from '../models/field-models/view-models/
 
 import { DynamicFormComponentState } from '../state/dynamic-form-component-state';
 
-export interface TextInputWithCustomValidationProps {
+export interface TextWithValidationProps {
     fieldName: string;
     watchFieldValue: string;
     register: UseFormRegister<DynamicFormComponentState>;
