@@ -5,9 +5,9 @@ import { ApiConfigurationBindingModel } from '../binding-models/api-configuratio
 import { FieldTypeModel } from '../field-type-model';
 
 export interface FieldBaseModel {
-  type: FieldTypeModel;
-  name: string;
-  label: string;
-  dependencies?: DependenciesViewModel;
-  apiConfiguration?: ApiConfigurationBindingModel;
+    type: FieldTypeModel;
+    name: string;
+    label: string;
+    dependencies?: DependenciesViewModel;
+    apiConfiguration?: ApiConfigurationBindingModel;
 }

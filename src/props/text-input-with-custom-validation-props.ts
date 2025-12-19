@@ -1,17 +1,14 @@
 import { FieldErrors, UseFormRegister } from 'react-hook-form';
 
+import { TextWithValidationViewModel } from '../models/field-models/view-models/text-with-validation-view-model';
+
 import { DynamicFormComponentState } from '../state/dynamic-form-component-state';
 
 export interface TextInputWithCustomValidationProps {
     fieldName: string;
-    fieldLabel: string;
-    required: boolean;
+    watchFieldValue: string;
     register: UseFormRegister<DynamicFormComponentState>;
     errors: FieldErrors<DynamicFormComponentState>;
-    validation: {
-        minLength: number;
-        maxLength: number;
-        pattern?: string;
-    };
+    field: TextWithValidationViewModel
     onChange: (value: string) => void;
 }
