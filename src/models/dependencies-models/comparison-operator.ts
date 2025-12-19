@@ -1,0 +1,1 @@
+export type ComparisonOperator = 'equals' | 'notEquals' | 'in' | 'notIn';
