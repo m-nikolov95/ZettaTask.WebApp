@@ -36,7 +36,7 @@ test('renders form with provided fields', () => {
             },
             {
                 type: FieldType.TextWithValidation, name: 'phoneNumber', label: 'Phone Number',
-                validation: { pattern: '^[0-9]{10}$', minLength: 10, maxLength: 10 }
+                validationRules: { pattern: '^[0-9]{10}$', minLength: 10, maxLength: 10 }
             }
         ]
     } as JSONFormSchemaViewModel;
