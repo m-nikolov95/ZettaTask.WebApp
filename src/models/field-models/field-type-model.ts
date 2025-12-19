@@ -1,1 +1,1 @@
-export type FieldTypeModel = 'text' | 'textarea' | 'dropdown' | 'checkbox' | 'radio' | 'textWithValidation';
+export type FieldTypeModel = 'text' | 'textarea' | 'dropdown' | 'checkbox' | 'radio' | 'textWithValidation' | 'group';

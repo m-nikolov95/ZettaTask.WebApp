@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button, TextField } from '@mui/material';
 
@@ -12,18 +12,38 @@ import { JSONInputViewModel } from '../../models/json-input-models/view-models/j
 import './JSONInputComponentStyles.css';
 
 export function JSONInputComponent() {
-    let { register, handleSubmit } = useForm<JSONInputViewModel>();
+    let { register, handleSubmit, setValue, reset } = useForm<JSONInputViewModel>();
 
     let [JSONFormSchemaState, setJSONFormSchemaState] = useState<JSONFormSchemaViewModel | null>(null);
+
+    useEffect(() => {
+        let jsonSchema = localStorage.getItem('schema');
+
+        if (jsonSchema !== null && jsonSchema !== undefined) {
+            setJSONFormSchemaState(JSON.parse(jsonSchema));
+
+            setValue('jsonText', jsonSchema);
+        }
+    }, []);
 
     const onSubmitButtonClicked: SubmitHandler<JSONInputViewModel> = (data: JSONInputViewModel) => {
         try {
             let parsedSchema = JSON.parse(data.jsonText);
 
             setJSONFormSchemaState(parsedSchema);
+
+            localStorage.setItem('schema', JSON.stringify(parsedSchema));
         } catch (error) {
             console.error('Invalid JSON format.');
         }
+    }
+
+    const onClearButtonClicked = (): void => {
+        reset();
+        
+        setJSONFormSchemaState(null);
+
+        localStorage.removeItem('schema');
     }
 
     return (
@@ -35,7 +55,8 @@ export function JSONInputComponent() {
                         variant='standard'
                         multiline
                         {...register('jsonText')} />
-                    <div className='submitButton'>
+                    <div className='buttonContainer'>
+                        <Button variant='contained' onClick={onClearButtonClicked}>Clear All</Button>
                         <Button variant='contained' onClick={handleSubmit(onSubmitButtonClicked)}>Submit</Button>
                     </div>
                 </div>

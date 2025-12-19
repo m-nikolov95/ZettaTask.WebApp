@@ -12,8 +12,10 @@
     }
 }
 
-.submitButton {
-    margin-top: 10px;
+.buttonContainer {
     display: flex;
+    flex-direction: row;
+    gap: 10px;
     justify-content: flex-end;
+    margin-top: 10px;
 }
