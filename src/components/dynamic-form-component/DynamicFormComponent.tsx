@@ -22,7 +22,7 @@ import { ComparisonOperator } from '../../enums/comparison-operator';
 import './DynamicFormComponentStyle.css';
 
 export function DynamicFormComponent(props: DynamicFormProps) {
-    let { handleSubmit, register, formState: { errors } } = useForm<DynamicFormComponentState>();
+    let { handleSubmit, register, reset, formState: { errors } } = useForm<DynamicFormComponentState>();
 
     let [dynamicFormState, setDynamicFormState] = useState<DynamicFormComponentState>({});
     let [outputJSONState, setOutputJSONState] = useState<string>('');
@@ -104,12 +104,14 @@ export function DynamicFormComponent(props: DynamicFormProps) {
         }
     }
 
-    const getNestedValue = (dynamicForm: DynamicFormComponentState, fieldName: string): any => {
+    const getFieldValue = (dynamicForm: DynamicFormComponentState, fieldName?: string): any => {
         let result = dynamicForm;
-        let keys = fieldName.split('.');
+        let keys = fieldName?.split('.');
 
-        for (let key of keys) {
-            result = result?.[key];
+        if (keys !== null && keys !== undefined) {
+            for (let key of keys) {
+                result = result?.[key];
+            }
         }
 
         return result;
@@ -118,7 +120,7 @@ export function DynamicFormComponent(props: DynamicFormProps) {
     const checkDependencies = (dependencyCondition: DependenciesViewModel): boolean => {
         if (dependencyCondition.visibility !== null &&
             dependencyCondition.visibility !== undefined) {
-            let fieldValue = getNestedValue(dynamicFormState, dependencyCondition.visibility.field)
+            let fieldValue = getFieldValue(dynamicFormState, dependencyCondition.visibility.field)
 
             switch (dependencyCondition.visibility.operator) {
                 case ComparisonOperator.Equals:
@@ -152,42 +154,41 @@ export function DynamicFormComponent(props: DynamicFormProps) {
                     return <TextInputComponent key={fieldName}
                         fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        value={getFieldValue(dynamicFormState, fieldName) || ''}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.TextWithValidation:
                     return <TextWithValidationComponent key={fieldName}
+                        field={field}
                         fieldName={fieldName}
-                        fieldLabel={field.label}
-                        required={field.required}
                         register={register}
                         errors={errors}
-                        validation={field.validation}
+                        watchFieldValue={getFieldValue(dynamicFormState, field.dynamicValidation?.watchField)}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.Checkbox:
                     return <CheckboxComponent key={fieldName}
                         fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={getNestedValue(dynamicFormState, fieldName) || false}
+                        value={getFieldValue(dynamicFormState, fieldName) || false}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)} />;
                 case FieldType.Dropdown:
                     return <DropdownComponent key={fieldName}
                         fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        value={getFieldValue(dynamicFormState, fieldName) || ''}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         options={field.options} />;
                 case FieldType.Radio:
                     return <RadioButtonComponent key={fieldName}
                         fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        value={getFieldValue(dynamicFormState, fieldName) || ''}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         options={field.options} />;
                 case FieldType.Textarea:
                     return <TextareaComponent key={fieldName}
                         fieldName={fieldName}
                         fieldLabel={field.label}
-                        value={getNestedValue(dynamicFormState, fieldName) || ''}
+                        value={getFieldValue(dynamicFormState, fieldName) || ''}
                         onChange={(value) => handleOnChangeFormField(fieldName, value)}
                         rows={4} />;
                 case FieldType.Group:
@@ -210,15 +211,23 @@ export function DynamicFormComponent(props: DynamicFormProps) {
         setOutputJSONState(outputJSON);
     }
 
+    const onClearButtonClicked = (): void => {
+        reset();
+        
+        setDynamicFormState({});
+        setApiCalledFields(new Set());
+        setOutputJSONState('');
+    }
+
     return (
         <div className='dynamicFormContainer'>
             <form onSubmit={handleSubmit(onSubmitButtonClicked)}>
-                <div>
-                    {renderFields(props.jsonSchema.fields)}
-                    <div className='submitButton'>
-                        <Button variant='contained' onClick={handleSubmit(onSubmitButtonClicked)}>Submit</Button>
-                    </div>
+                {renderFields(props.jsonSchema.fields)}
+                <div className='buttonContainer'>
+                    <Button variant='contained' onClick={onClearButtonClicked}>Clear</Button>
+                    <Button variant='contained' onClick={handleSubmit(onSubmitButtonClicked)}>Submit</Button>
                 </div>
+
             </form>
             <div>
                 {
