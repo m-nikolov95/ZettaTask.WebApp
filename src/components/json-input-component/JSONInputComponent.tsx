@@ -12,7 +12,7 @@ import { JSONInputViewModel } from '../../models/json-input-models/view-models/j
 import './JSONInputComponentStyles.css';
 
 export function JSONInputComponent() {
-    let { register, handleSubmit, setValue } = useForm<JSONInputViewModel>();
+    let { register, handleSubmit, setValue, reset } = useForm<JSONInputViewModel>();
 
     let [JSONFormSchemaState, setJSONFormSchemaState] = useState<JSONFormSchemaViewModel | null>(null);
 
@@ -38,6 +38,14 @@ export function JSONInputComponent() {
         }
     }
 
+    const onClearButtonClicked = (): void => {
+        reset();
+        
+        setJSONFormSchemaState(null);
+
+        localStorage.removeItem('schema');
+    }
+
     return (
         <div className='jsonInputContainer'>
             <form onSubmit={handleSubmit(onSubmitButtonClicked)}>
@@ -47,7 +55,8 @@ export function JSONInputComponent() {
                         variant='standard'
                         multiline
                         {...register('jsonText')} />
-                    <div className='submitButton'>
+                    <div className='buttonContainer'>
+                        <Button variant='contained' onClick={onClearButtonClicked}>Clear All</Button>
                         <Button variant='contained' onClick={handleSubmit(onSubmitButtonClicked)}>Submit</Button>
                     </div>
                 </div>
